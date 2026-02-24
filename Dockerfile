@@ -2,13 +2,15 @@ FROM node:20
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
+RUN npm install -g pnpm
 
-RUN npm install
+COPY package*.json pnpm-lock.yaml ./
+
+RUN pnpm install
 
 COPY . .
 
-RUN npm run build
+RUN pnpm build
 
 EXPOSE 3000
 
