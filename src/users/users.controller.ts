@@ -6,15 +6,14 @@ import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 
 @ApiTags('users')
-@Controller('users')
+@Controller('api/v1/users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @Post()
- create(@Body() dto: CreateUserDto): Promise<User> {
+  create(@Body() dto: CreateUserDto): Promise<User> {
     return this.usersService.create(dto);
   }
-
 
   @Get()
   findAll() {
