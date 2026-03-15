@@ -1,12 +1,18 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
+import { UsersModule } from './modules/users/users.module';
+import { AuthenticationModule } from './modules/authentication/authentication.module';
+import { RolesModule } from './roles/roles.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST || 'localhost',
@@ -17,7 +23,9 @@ import { UsersModule } from './users/users.module';
       autoLoadEntities: true,
       synchronize: true, // dev only
     }),
+    AuthenticationModule,
     UsersModule,
+    RolesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
