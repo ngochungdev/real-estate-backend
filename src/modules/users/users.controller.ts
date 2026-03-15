@@ -10,6 +10,7 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,6 +20,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from '../authentication/jwt-auth.guard';
 import { Public } from 'src/common/decorators/public.decorator';
 
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
 @Controller('api/v1/users')
 export class UsersController {

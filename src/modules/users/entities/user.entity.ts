@@ -13,9 +13,6 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ nullable: true })
-  tenantId: string;
-
   @Column({ length: 100 })
   name: string;
 

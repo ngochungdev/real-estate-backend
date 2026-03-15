@@ -68,7 +68,6 @@ export class UsersService {
     const query = this.usersRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.role', 'role')
-      .leftJoinAndSelect('user.tenant', 'tenant')
       .orderBy(sortBy, sortOrder)
       .skip((page - 1) * limit)
       .take(limit);

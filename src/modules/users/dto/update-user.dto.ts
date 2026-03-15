@@ -16,8 +16,4 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   roleId: string;
-
-  @IsOptional()
-  @IsString()
-  tenantId: string;
 }

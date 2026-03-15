@@ -36,7 +36,6 @@ export class AuthenticationService {
       sub: user.id,
       username: user.username,
       roleId: user.roleId,
-      tenantId: user.tenantId,
     };
 
     const refreshToken = this.jwtService.sign(payload, {

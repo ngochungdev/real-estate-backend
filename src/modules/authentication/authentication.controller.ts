@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 import { LoginDto } from './dto/login.dto';
 import { AuthenticationService } from './authentication.service';
@@ -58,7 +59,6 @@ export class AuthenticationController {
           sub: user.id,
           username: user.username,
           role: user.roleId,
-          tenantId: user.tenantId,
         },
         { secret: this.config.get<string>('JWT_SECRET'), expiresIn: '1h' },
       );
@@ -69,6 +69,7 @@ export class AuthenticationController {
     }
   }
 
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   async logout(@Request() req) {
