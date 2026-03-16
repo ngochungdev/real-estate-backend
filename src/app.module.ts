@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './modules/users/users.module';
 import { AuthenticationModule } from './modules/authentication/authentication.module';
-import { RolesModule } from './roles/roles.module';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
+import { RolesModule } from './modules/roles/roles.module';
 
 @Module({
   imports: [

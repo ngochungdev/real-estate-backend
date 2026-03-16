@@ -5,7 +5,7 @@ import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { AdminSeedService } from './admin_seed.service';
-import { UserRole } from 'src/roles/entities/role.entity';
+import { UserRole } from 'src/modules/roles/entities/role.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, UserRole])],
