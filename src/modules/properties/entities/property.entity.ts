@@ -44,6 +44,9 @@ export class Property {
   @Column()
   user_id: string;
 
+  @Column({ type: 'jsonb', nullable: true, default: [] })
+  images: string[];
+
   @CreateDateColumn()
   createdAt: Date;
 

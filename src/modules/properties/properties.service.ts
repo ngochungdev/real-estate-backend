@@ -5,6 +5,8 @@ import { Property } from './entities/property.entity';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { GetPropertiesFilterDto } from './dto/get-properties-filter.dto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class PropertiesService {
@@ -13,9 +15,12 @@ export class PropertiesService {
     private propertyRepo: Repository<Property>,
   ) {}
 
-  async create(createDto: CreatePropertyDto) {
+  async create(createDto: CreatePropertyDto, userId: string) {
     try {
-      const property = this.propertyRepo.create(createDto);
+      const property = this.propertyRepo.create({
+        ...createDto,
+        user_id: userId,
+      });
       return await this.propertyRepo.save(property);
     } catch (error: any) {
       throw new BadRequestException(error.message || 'Có lỗi xảy ra khi tạo bất động sản');
@@ -98,7 +103,14 @@ export class PropertiesService {
     return this.propertyRepo.findOneBy({ id });
   }
 
-  update(id: number, updateDto: UpdatePropertyDto) {
+  async update(id: number, updateDto: UpdatePropertyDto, userId: string) {
+    const property = await this.propertyRepo.findOneBy({ id });
+    if (!property) {
+      throw new NotFoundException('Bất động sản không tồn tại');
+    }
+    if (property.user_id !== userId) {
+      throw new ForbiddenException('Bạn không có quyền chỉnh sửa bất động sản này');
+    }
     return this.propertyRepo.update(id, updateDto);
   }
 
@@ -107,10 +119,38 @@ export class PropertiesService {
     if (!property) {
       throw new NotFoundException('Bất động sản không tồn tại');
     }
-    console.log(property.user_id, userId);
     if (property.user_id !== userId) {
       throw new ForbiddenException('Bạn không có quyền xóa bất động sản này');
     }
     return this.propertyRepo.softDelete(id);
+  }
+
+  async uploadImages(id: number, files: Express.Multer.File[], userId: string) {
+    const property = await this.propertyRepo.findOneBy({ id });
+    if (!property) {
+      throw new NotFoundException('Bất động sản không tồn tại');
+    }
+    console.log('Ownership check:', { propertyUserId: property.user_id, requestUserId: userId });
+    if (property.user_id !== userId) {
+      throw new ForbiddenException(`Bạn không có quyền cập nhật ảnh. (Property: ${property.user_id}, User: ${userId})`);
+    }
+
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const urls: string[] = [];
+    for (const file of files) {
+      const fileExt = path.extname(file.originalname);
+      const fileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExt}`;
+      const filePath = path.join(uploadDir, fileName);
+
+      fs.writeFileSync(filePath, file.buffer);
+      urls.push(`/static/uploads/properties/${fileName}`);
+    }
+
+    property.images = [...(property.images || []), ...urls];
+    return this.propertyRepo.save(property);
   }
 }
