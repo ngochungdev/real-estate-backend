@@ -62,7 +62,7 @@ export class UsersService {
     page = 1,
     limit = 20,
     search?: string,
-    sortBy = 'user.created_at',
+    sortBy = 'user.createdAt',
     sortOrder: 'ASC' | 'DESC' = 'DESC',
   ) {
     const query = this.usersRepository
@@ -98,7 +98,7 @@ export class UsersService {
 
   // delete by id
   async delete(id: string): Promise<void> {
-    const result = await this.usersRepository.delete(id);
+    const result = await this.usersRepository.softDelete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`User with id ${id} not found`);
     }

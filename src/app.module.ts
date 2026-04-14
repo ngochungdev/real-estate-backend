@@ -9,6 +9,7 @@ import { AppService } from './app.service';
 import { UsersModule } from './modules/users/users.module';
 import { AuthenticationModule } from './modules/authentication/authentication.module';
 import { RolesModule } from './modules/roles/roles.module';
+import { PropertiesModule } from './modules/properties/properties.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { RolesModule } from './modules/roles/roles.module';
     AuthenticationModule,
     UsersModule,
     RolesModule,
+    PropertiesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
