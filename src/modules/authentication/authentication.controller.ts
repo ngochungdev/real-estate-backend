@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth } from '@nestjs/swagger';
 
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import { AuthenticationService } from './authentication.service';
 import { UsersService } from '../users/users.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -28,6 +29,19 @@ export class AuthenticationController {
 
   @Post('login')
   async login(@Body() dto: LoginDto) {
+    return this.authenticationService.login(dto.username, dto.password);
+  }
+
+  @Post('register')
+  async register(@Body() dto: RegisterDto) {
+    const newUser = await this.usersService.registerUser({
+      name: dto.name,
+      email: dto.email,
+      username: dto.username,
+      password: dto.password,
+    });
+    
+    // Automatically login after successful registration
     return this.authenticationService.login(dto.username, dto.password);
   }
 

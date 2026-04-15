@@ -10,6 +10,7 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthenticationModule } from './modules/authentication/authentication.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { PropertiesModule } from './modules/properties/properties.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { PropertiesModule } from './modules/properties/properties.module';
     UsersModule,
     RolesModule,
     PropertiesModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

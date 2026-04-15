@@ -1,0 +1,34 @@
+{
+  "http_api": {
+    "key": "centrifugo-api-secret-key"
+  },
+  "client": {
+    "token": {
+      "hmac_secret_key": "centrifugo-token-secret-key"
+    },
+    "allowed_origins": [
+      "http://localhost:5173",
+      "http://localhost:3000"
+    ]
+  },
+  "admin": {
+    "enabled": true,
+    "password": "admin123",
+    "secret": "admin-secret"
+  },
+  "log": {
+    "level": "info"
+  },
+  "channel": {
+    "namespaces": [
+      {
+        "name": "chat",
+        "presence": false,
+        "history_size": 100,
+        "history_ttl": "24h",
+        "allow_subscribe_for_client": true,
+        "allow_publish_for_client": false
+      }
+    ]
+  }
+}

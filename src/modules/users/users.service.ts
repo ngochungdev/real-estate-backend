@@ -58,6 +58,42 @@ export class UsersService {
     return this.getUserWithRelations(savedUser.id);
   }
 
+  async registerUser(dto: Omit<CreateUserDto, 'roleId'>): Promise<User> {
+    const existingUser = await this.usersRepository.findOne({
+      where: { username: dto.username },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('Username already exists');
+    }
+
+    const existingEmail = await this.usersRepository.findOne({
+      where: { email: dto.email },
+    });
+
+    if (existingEmail) {
+      throw new ConflictException('Email already exists');
+    }
+
+    const role = await this.userRoleRepository.findOne({ where: { name: 'normal' } });
+    if (!role) {
+      throw new BadRequestException('Default user role not found. Please contact support.');
+    }
+
+    const password_hash = await bcrypt.hash(dto.password, 10);
+
+    const user = this.usersRepository.create({
+      name: dto.name,
+      email: dto.email,
+      username: dto.username,
+      password_hash,
+      roleId: role.id,
+    });
+
+    const savedUser = await this.usersRepository.save(user);
+    return this.getUserWithRelations(savedUser.id);
+  }
+
   async findAll(
     page = 1,
     limit = 20,

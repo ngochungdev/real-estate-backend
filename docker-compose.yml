@@ -47,6 +47,18 @@ services:
     networks:
       - realestate_network
 
+  centrifugo:
+    image: centrifugo/centrifugo:v6
+    container_name: realestate_centrifugo
+    restart: always
+    volumes:
+      - ./centrifugo.json:/centrifugo.json
+    command: centrifugo --config=/centrifugo.json
+    ports:
+      - "8000:8000"
+    networks:
+      - realestate_network
+
   api:
     build: .
     container_name: realestate_api
@@ -59,6 +71,7 @@ services:
       - postgres
       - redis
       - rabbitmq
+      - centrifugo
     networks:
       - realestate_network
 
