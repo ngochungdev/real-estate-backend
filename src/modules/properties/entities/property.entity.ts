@@ -29,10 +29,10 @@ export class Property {
   @Column()
   ward: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'double precision', nullable: true })
   lat: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'double precision', nullable: true })
   lng: number;
 
   @Column()
