@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -20,13 +20,13 @@ export class ChatService {
     private usersService: UsersService,
   ) {}
 
-  /** Tạo conversationId nhất quán từ 2 userId (thứ tự sắp xếp để luôn ra cùng 1 kết quả) */
+  /** Generate a consistent conversationId from 2 userIds (sorted order to always yield the same result) */
   getConversationId(userId1: string, userId2: string): string {
     const sorted = [userId1, userId2].sort();
     return `chat:${sorted[0]}-${sorted[1]}`;
   }
 
-  /** Tạo Centrifugo connection JWT cho client */
+  /** Generate Centrifugo connection JWT for client */
   generateCentrifugoToken(userId: string, userName: string): string {
     const secret = this.config.get<string>('CENTRIFUGO_TOKEN_SECRET');
     return this.jwtService.sign(
@@ -42,10 +42,10 @@ export class ChatService {
     );
   }
 
-  /** Gửi tin nhắn: lưu DB + publish qua Centrifugo */
+  /** Send a message: save to DB + publish via Centrifugo */
   async sendMessage(senderId: string, dto: SendMessageDto) {
     const sender = await this.usersService.findById(senderId);
-    if (!sender) throw new NotFoundException('Người dùng không tồn tại');
+    if (!sender) throw new NotFoundException('User not found');
 
     const conversationId = this.getConversationId(senderId, dto.receiverId);
 
@@ -58,7 +58,7 @@ export class ChatService {
 
     const saved = await this.messageRepo.save(message);
 
-    // Publish realtime — không block nếu Centrifugo lỗi
+    // Publish realtime — do not block if Centrifugo fails
     await this.centrifugoService.publish(conversationId, {
       id: saved.id,
       senderId: saved.senderId,
@@ -70,7 +70,7 @@ export class ChatService {
     return saved;
   }
 
-  /** Lấy lịch sử tin nhắn giữa 2 người dùng (có phân trang) */
+  /** Get message history between 2 users (with pagination) */
   async getHistory(
     userId: string,
     receiverId: string,
@@ -84,10 +84,20 @@ export class ChatService {
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
+      withDeleted: true,
+    });
+
+    const mappedData = data.reverse().map(msg => {
+      // Cast to `any` internally or add directly to the returned object
+      return {
+        ...msg,
+        isDeleted: !!msg.deletedAt,
+        isEdited: msg.updatedAt && msg.createdAt && msg.updatedAt.getTime() > msg.createdAt.getTime(),
+      };
     });
 
     return {
-      data: data.reverse(), // trả về theo thứ tự tăng dần
+      data: mappedData, // return in ascending order with status flags
       total,
       page,
       limit,
@@ -95,17 +105,18 @@ export class ChatService {
     };
   }
 
-  /** Danh sách conversations gần đây (lấy tin nhắn cuối mỗi conversation) */
+  /** List of recent conversations (getting the last message of each) */
   async getConversations(userId: string) {
     /*
-     * Lấy các conversationId có chứa userId, sau đó lấy tin nhắn mới nhất của mỗi conversation.
-     * Dùng raw query để hiệu quả hơn.
+     * Get conversationIds containing the userId, then get the newest message for each conversation.
+     * Use raw query for better performance.
      */
     const rows = await this.messageRepo.query(
       `SELECT DISTINCT ON ("conversationId") 
         id, "senderId", "senderName", content, "createdAt", "conversationId"
        FROM messages 
        WHERE "conversationId" LIKE $1 
+         AND "deletedAt" IS NULL
        ORDER BY "conversationId", "createdAt" DESC`,
       [`%${userId}%`],
     );
@@ -113,10 +124,10 @@ export class ChatService {
     return rows;
   }
 
-  /** Lấy metadata của hội thoại 1-1 (dùng khi bắt đầu chat mới) */
+  /** Get metadata for a 1-1 conversation (used when starting a new chat) */
   async getConversationMetadata(userId: string, targetUserId: string) {
     const targetUser = await this.usersService.findById(targetUserId);
-    if (!targetUser) throw new NotFoundException('Người nhận không tồn tại');
+    if (!targetUser) throw new NotFoundException('Receiver not found');
 
     const conversationId = this.getConversationId(userId, targetUserId);
 
@@ -128,5 +139,73 @@ export class ChatService {
         username: targetUser.username,
       },
     };
+  }
+
+  /** Delete a specific message */
+  async deleteMessage(userId: string, messageId: string) {
+    const message = await this.messageRepo.findOne({
+      where: { id: messageId },
+    });
+
+    if (!message) throw new NotFoundException('Message not found');
+
+    // Only the sender has permission to delete (or could be extended for the receiver)
+    if (message.senderId !== userId) {
+      throw new ForbiddenException('You do not have permission to delete this message');
+    }
+
+    await this.messageRepo.softDelete(messageId);
+
+    // Publish delete event to update frontend UI
+    await this.centrifugoService.publish(message.conversationId, {
+      type: 'message_deleted',
+      messageId: messageId,
+    });
+
+    return { success: true };
+  }
+
+  /** Delete entire conversation */
+  async deleteConversation(userId: string, conversationId: string) {
+    // Check if user belongs to this conversation (conversationId: chat:user1-user2)
+    if (!conversationId.includes(userId)) {
+      throw new ForbiddenException('You are not part of this conversation');
+    }
+
+    await this.messageRepo.softDelete({ conversationId });
+
+    // Can publish an event to notify the other party that the conversation was deleted (if needed)
+    await this.centrifugoService.publish(conversationId, {
+      type: 'conversation_deleted',
+      conversationId: conversationId,
+    });
+
+    return { success: true };
+  }
+
+  /** Edit a message */
+  async editMessage(userId: string, messageId: string, content: string) {
+    const message = await this.messageRepo.findOne({
+      where: { id: messageId },
+    });
+
+    if (!message) throw new NotFoundException('Message not found');
+
+    if (message.senderId !== userId) {
+      throw new ForbiddenException('You do not have permission to edit this message');
+    }
+
+    message.content = content;
+    const saved = await this.messageRepo.save(message);
+
+    // Publish event update
+    await this.centrifugoService.publish(message.conversationId, {
+      type: 'message_edited',
+      messageId: saved.id,
+      content: saved.content,
+      updatedAt: saved.updatedAt,
+    });
+
+    return saved;
   }
 }

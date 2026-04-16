@@ -2,6 +2,8 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
+  Patch,
   Body,
   Param,
   Query,
@@ -23,9 +25,9 @@ export class ChatController {
 
   /**
    * GET /api/v1/chat/token
-   * Trả về Centrifugo connection JWT để client kết nối WebSocket
+   * Returns Centrifugo connection JWT for client WebSocket connection
    */
-  @ApiOperation({ summary: 'Lấy Centrifugo connection token' })
+  @ApiOperation({ summary: 'Get Centrifugo connection token' })
   @Get('token')
   getCentrifugoToken(@Request() req) {
     const token = this.chatService.generateCentrifugoToken(
@@ -37,9 +39,9 @@ export class ChatController {
 
   /**
    * POST /api/v1/chat/messages
-   * Gửi tin nhắn đến một người dùng khác
+   * Send a message to another user
    */
-  @ApiOperation({ summary: 'Gửi tin nhắn' })
+  @ApiOperation({ summary: 'Send message' })
   @Post('messages')
   sendMessage(@Body() dto: SendMessageDto, @Request() req) {
     return this.chatService.sendMessage(req.user.userId, dto);
@@ -47,9 +49,9 @@ export class ChatController {
 
   /**
    * GET /api/v1/chat/messages/:receiverId
-   * Lấy lịch sử tin nhắn với người dùng
+   * Get message history with a user
    */
-  @ApiOperation({ summary: 'Lấy lịch sử tin nhắn với một người dùng' })
+  @ApiOperation({ summary: 'Get message history with a user' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @Get('messages/:receiverId')
@@ -64,9 +66,9 @@ export class ChatController {
 
   /**
    * GET /api/v1/chat/conversations
-   * Danh sách các cuộc hội thoại của user hiện tại
+   * List of conversations for the current user
    */
-  @ApiOperation({ summary: 'Danh sách cuộc hội thoại' })
+  @ApiOperation({ summary: 'List of conversations' })
   @Get('conversations')
   getConversations(@Request() req) {
     return this.chatService.getConversations(req.user.userId);
@@ -74,14 +76,51 @@ export class ChatController {
 
   /**
    * GET /api/v1/chat/conversations/:targetUserId
-   * Lấy metadata của hội thoại 1-1 với người dùng cụ thể
+   * Get metadata for a 1-1 conversation with a specific user
    */
-  @ApiOperation({ summary: 'Lấy metadata hội thoại 1-1' })
+  @ApiOperation({ summary: 'Get 1-1 conversation metadata' })
   @Get('conversations/:targetUserId')
   getConversationMetadata(
     @Param('targetUserId') targetUserId: string,
     @Request() req,
   ) {
     return this.chatService.getConversationMetadata(req.user.userId, targetUserId);
+  }
+
+  /**
+   * DELETE /api/v1/chat/messages/:id
+   * Delete a specific message
+   */
+  @ApiOperation({ summary: 'Delete message' })
+  @Delete('messages/:id')
+  deleteMessage(@Param('id') id: string, @Request() req) {
+    return this.chatService.deleteMessage(req.user.userId, id);
+  }
+
+  /**
+   * DELETE /api/v1/chat/conversations/:conversationId
+   * Delete entire conversation
+   */
+  @ApiOperation({ summary: 'Delete conversation' })
+  @Delete('conversations/:conversationId')
+  deleteConversation(
+    @Param('conversationId') conversationId: string,
+    @Request() req,
+  ) {
+    return this.chatService.deleteConversation(req.user.userId, conversationId);
+  }
+
+  /**
+   * PATCH /api/v1/chat/messages/:id
+   * Edit a message
+   */
+  @ApiOperation({ summary: 'Edit message' })
+  @Patch('messages/:id')
+  editMessage(
+    @Param('id') id: string,
+    @Body('content') content: string,
+    @Request() req,
+  ) {
+    return this.chatService.editMessage(req.user.userId, id, content);
   }
 }

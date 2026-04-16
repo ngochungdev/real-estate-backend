@@ -28,7 +28,7 @@ export class PropertiesService {
       });
       return await this.propertyRepo.save(property);
     } catch (error: any) {
-      throw new BadRequestException(error.message || 'Có lỗi xảy ra khi tạo bất động sản');
+      throw new BadRequestException(error.message || 'An error occurred while creating the property');
     }
   }
 
@@ -144,10 +144,10 @@ export class PropertiesService {
   async update(id: number, updateDto: UpdatePropertyDto, userId: string) {
     const property = await this.propertyRepo.findOneBy({ id });
     if (!property) {
-      throw new NotFoundException('Bất động sản không tồn tại');
+      throw new NotFoundException('Property not found');
     }
     if (property.user_id !== userId) {
-      throw new ForbiddenException('Bạn không có quyền chỉnh sửa bất động sản này');
+      throw new ForbiddenException('You do not have permission to edit this property');
     }
     return this.propertyRepo.update(id, updateDto);
   }
@@ -155,10 +155,10 @@ export class PropertiesService {
   async remove(id: number, userId: string) {
     const property = await this.propertyRepo.findOneBy({ id });
     if (!property) {
-      throw new NotFoundException('Bất động sản không tồn tại');
+      throw new NotFoundException('Property not found');
     }
     if (property.user_id !== userId) {
-      throw new ForbiddenException('Bạn không có quyền xóa bất động sản này');
+      throw new ForbiddenException('You do not have permission to delete this property');
     }
     return this.propertyRepo.softDelete(id);
   }
@@ -166,12 +166,12 @@ export class PropertiesService {
   async uploadImages(id: number, files: Express.Multer.File[], userId: string) {
     const property = await this.propertyRepo.findOneBy({ id });
     if (!property) {
-      throw new NotFoundException('Bất động sản không tồn tại');
+      throw new NotFoundException('Property not found');
     }
     console.log('Ownership check:', { propertyUserId: property.user_id, requestUserId: userId });
     if (property.user_id !== userId) {
       throw new ForbiddenException(
-        `Bạn không có quyền cập nhật ảnh. (Property: ${property.user_id}, User: ${userId})`,
+        `You do not have permission to update images. (Property: ${property.user_id}, User: ${userId})`,
       );
     }
 
@@ -199,7 +199,7 @@ export class PropertiesService {
   async toggleLike(propertyId: number, userId: string) {
     const property = await this.propertyRepo.findOneBy({ id: propertyId });
     if (!property) {
-      throw new NotFoundException('Bất động sản không tồn tại');
+      throw new NotFoundException('Property not found');
     }
 
     const existing = await this.likeRepo.findOne({

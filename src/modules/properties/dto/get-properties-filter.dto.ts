@@ -44,17 +44,17 @@ export class GetPropertiesFilterDto {
   @IsNumber()
   maxPrice?: number;
 
-  @ApiPropertyOptional({ description: 'Filter by province', example: 'Hà Nội' })
+  @ApiPropertyOptional({ description: 'Filter by province', example: 'Hanoi' })
   @IsOptional()
   @IsString()
   province?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by district', example: 'Quận Cầu Giấy' })
+  @ApiPropertyOptional({ description: 'Filter by district', example: 'Cau Giay District' })
   @IsOptional()
   @IsString()
   district?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by ward', example: 'Phường Dịch Vọng' })
+  @ApiPropertyOptional({ description: 'Filter by ward', example: 'Dich Vong Ward' })
   @IsOptional()
   @IsString()
   ward?: string;

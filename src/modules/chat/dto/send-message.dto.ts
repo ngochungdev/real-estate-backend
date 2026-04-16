@@ -7,7 +7,7 @@ export class SendMessageDto {
   @IsNotEmpty()
   receiverId: string;
 
-  @ApiProperty({ description: 'Message content', example: 'Xin chào, tôi muốn hỏi về bất động sản này' })
+  @ApiProperty({ description: 'Message content', example: 'Hello, I want to ask about this property' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(2000)
