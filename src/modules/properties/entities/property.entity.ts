@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  OneToMany,
+} from 'typeorm';
+import { PropertyLike } from './property-like.entity';
 
 @Entity('properties')
 export class Property {
@@ -55,4 +64,11 @@ export class Property {
 
   @DeleteDateColumn()
   deletedAt: Date;
+
+  @OneToMany(() => PropertyLike, (like) => like.property)
+  likes: PropertyLike[];
+
+  // Virtual fields (populated by query builder)
+  likeCount?: number;
+  isLiked?: boolean;
 }

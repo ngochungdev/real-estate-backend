@@ -1,4 +1,18 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards, Query, Request, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+  UseGuards,
+  Query,
+  Request,
+  UploadedFiles,
+  UseInterceptors,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
@@ -21,21 +35,37 @@ export class PropertiesController {
 
   @Public()
   @Get()
-  findAll(@Query() filterDto: GetPropertiesFilterDto) {
-    return this.propertiesService.findAll(filterDto);
+  findAll(@Query() filterDto: GetPropertiesFilterDto, @Request() req) {
+    const currentUserId = req.user?.userId;
+    return this.propertiesService.findAll(filterDto, currentUserId);
+  }
+
+  /**
+   * GET /api/v1/properties/liked/me
+   * Get all properties liked by the current user. Requires authentication.
+   * NOTE: Must be declared BEFORE :id route to avoid route collision.
+   */
+  @Get('liked/me')
+  getLikedProperties(
+    @Request() req,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.propertiesService.getLikedProperties(req.user.userId, page, limit);
   }
 
   @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.propertiesService.findOne(+id);
+  findOne(@Param('id') id: string, @Request() req) {
+    const currentUserId = req.user?.userId;
+    return this.propertiesService.findOne(+id, currentUserId);
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
     @Body() updateDto: UpdatePropertyDto,
-    @Request() req
+    @Request() req,
   ) {
     return this.propertiesService.update(+id, updateDto, req.user.userId);
   }
@@ -46,12 +76,34 @@ export class PropertiesController {
   }
 
   @Post(':id/images')
-  @UseInterceptors(FilesInterceptor('images', 10)) // Max 10 images
+  @UseInterceptors(FilesInterceptor('images', 10))
   uploadImages(
     @Param('id') id: string,
     @UploadedFiles() files: Array<Express.Multer.File>,
     @Request() req,
   ) {
     return this.propertiesService.uploadImages(+id, files, req.user.userId);
+  }
+
+  // ─── LIKE / UNLIKE ──────────────────────────────────────────────────────────
+
+  /**
+   * POST /api/v1/properties/:id/like
+   * Toggle like/unlike for a property. Requires authentication.
+   */
+  @Post(':id/like')
+  toggleLike(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    return this.propertiesService.toggleLike(id, req.user.userId);
+  }
+
+  /**
+   * GET /api/v1/properties/:id/like
+   * Get like count + isLiked status. Public, but isLiked requires auth.
+   */
+  @Public()
+  @Get(':id/like')
+  getLikeStatus(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    const currentUserId = req.user?.userId;
+    return this.propertiesService.getLikeStatus(id, currentUserId);
   }
 }

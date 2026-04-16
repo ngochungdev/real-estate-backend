@@ -18,5 +18,6 @@ import { UsersModule } from '../users/users.module';
   ],
   providers: [ChatService, CentrifugoService],
   controllers: [ChatController],
+  exports: [CentrifugoService],
 })
 export class ChatModule {}

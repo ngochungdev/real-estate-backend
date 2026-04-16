@@ -28,6 +28,15 @@
         "history_ttl": "24h",
         "allow_subscribe_for_client": true,
         "allow_publish_for_client": false
+      },
+      {
+        "name": "property",
+        "presence": false,
+        "history_size": 1,
+        "history_ttl": "1m",
+        "allow_subscribe_for_anonymous": true,
+        "allow_subscribe_for_client": true,
+        "allow_publish_for_client": false
       }
     ]
   }

@@ -2,9 +2,11 @@ import { Injectable, BadRequestException, NotFoundException, ForbiddenException 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Property } from './entities/property.entity';
+import { PropertyLike } from './entities/property-like.entity';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { GetPropertiesFilterDto } from './dto/get-properties-filter.dto';
+import { CentrifugoService } from '../chat/centrifugo.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -13,6 +15,9 @@ export class PropertiesService {
   constructor(
     @InjectRepository(Property)
     private propertyRepo: Repository<Property>,
+    @InjectRepository(PropertyLike)
+    private likeRepo: Repository<PropertyLike>,
+    private centrifugoService: CentrifugoService,
   ) {}
 
   async create(createDto: CreatePropertyDto, userId: string) {
@@ -27,7 +32,7 @@ export class PropertiesService {
     }
   }
 
-  async findAll(filterDto: GetPropertiesFilterDto) {
+  async findAll(filterDto: GetPropertiesFilterDto, currentUserId?: string) {
     const {
       page = 1,
       limit = 10,
@@ -42,7 +47,9 @@ export class PropertiesService {
       user_id,
     } = filterDto;
 
-    const query = this.propertyRepo.createQueryBuilder('property');
+    const query = this.propertyRepo
+      .createQueryBuilder('property')
+      .loadRelationCountAndMap('property.likeCount', 'property.likes');
 
     if (search) {
       query.andWhere(
@@ -90,8 +97,23 @@ export class PropertiesService {
       .take(limit)
       .getManyAndCount();
 
+    // Attach isLiked for current user
+    let likedPropertyIds = new Set<number>();
+    if (currentUserId) {
+      const liked = await this.likeRepo.find({
+        where: { user_id: currentUserId },
+        select: ['property_id'],
+      });
+      likedPropertyIds = new Set(liked.map((l) => l.property_id));
+    }
+
+    const enriched = data.map((p: any) => ({
+      ...p,
+      isLiked: likedPropertyIds.has(p.id),
+    }));
+
     return {
-      data,
+      data: enriched,
       total,
       page,
       limit,
@@ -99,8 +121,24 @@ export class PropertiesService {
     };
   }
 
-  findOne(id: number) {
-    return this.propertyRepo.findOneBy({ id });
+  async findOne(id: number, currentUserId?: string) {
+    const property = await this.propertyRepo
+      .createQueryBuilder('property')
+      .loadRelationCountAndMap('property.likeCount', 'property.likes')
+      .where('property.id = :id', { id })
+      .getOne();
+
+    if (!property) return null;
+
+    let isLiked = false;
+    if (currentUserId) {
+      const like = await this.likeRepo.findOne({
+        where: { user_id: currentUserId, property_id: id },
+      });
+      isLiked = !!like;
+    }
+
+    return { ...property, isLiked };
   }
 
   async update(id: number, updateDto: UpdatePropertyDto, userId: string) {
@@ -132,7 +170,9 @@ export class PropertiesService {
     }
     console.log('Ownership check:', { propertyUserId: property.user_id, requestUserId: userId });
     if (property.user_id !== userId) {
-      throw new ForbiddenException(`Bạn không có quyền cập nhật ảnh. (Property: ${property.user_id}, User: ${userId})`);
+      throw new ForbiddenException(
+        `Bạn không có quyền cập nhật ảnh. (Property: ${property.user_id}, User: ${userId})`,
+      );
     }
 
     const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties');
@@ -152,5 +192,66 @@ export class PropertiesService {
 
     property.images = [...(property.images || []), ...urls];
     return this.propertyRepo.save(property);
+  }
+
+  // ─── LIKE / UNLIKE ──────────────────────────────────────────────────────────
+
+  async toggleLike(propertyId: number, userId: string) {
+    const property = await this.propertyRepo.findOneBy({ id: propertyId });
+    if (!property) {
+      throw new NotFoundException('Bất động sản không tồn tại');
+    }
+
+    const existing = await this.likeRepo.findOne({
+      where: { user_id: userId, property_id: propertyId },
+    });
+
+    if (existing) {
+      await this.likeRepo.remove(existing);
+    } else {
+      const like = this.likeRepo.create({ user_id: userId, property_id: propertyId });
+      await this.likeRepo.save(like);
+    }
+
+    const likeCount = await this.likeRepo.count({ where: { property_id: propertyId } });
+    const isLiked = !existing;
+
+    // Publish realtime event to all subscribers
+    console.log(`[PropertiesService] Toggling like for property ${propertyId}, user ${userId}. New count: ${likeCount}`);
+    await this.centrifugoService.publish(`property:${propertyId}:likes`, {
+      propertyId,
+      likeCount,
+      userId,
+    });
+
+    return { isLiked, likeCount };
+  }
+
+  async getLikeStatus(propertyId: number, userId?: string) {
+    const likeCount = await this.likeRepo.count({ where: { property_id: propertyId } });
+    let isLiked = false;
+    if (userId) {
+      const like = await this.likeRepo.findOne({
+        where: { user_id: userId, property_id: propertyId },
+      });
+      isLiked = !!like;
+    }
+    return { isLiked, likeCount };
+  }
+
+  async getLikedProperties(userId: string, page = 1, limit = 10) {
+    const [likes, total] = await this.likeRepo.findAndCount({
+      where: { user_id: userId },
+      relations: ['property'],
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+
+    const data = likes
+      .filter((l) => l.property && !l.property.deletedAt)
+      .map((l) => ({ ...l.property, isLiked: true }));
+
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 }
