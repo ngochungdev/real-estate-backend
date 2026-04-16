@@ -7,6 +7,7 @@ import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { GetPropertiesFilterDto } from './dto/get-properties-filter.dto';
 import { CentrifugoService } from '../chat/centrifugo.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -18,6 +19,7 @@ export class PropertiesService {
     @InjectRepository(PropertyLike)
     private likeRepo: Repository<PropertyLike>,
     private centrifugoService: CentrifugoService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async create(createDto: CreatePropertyDto, userId: string) {
@@ -26,7 +28,18 @@ export class PropertiesService {
         ...createDto,
         user_id: userId,
       });
-      return await this.propertyRepo.save(property);
+      const saved = await this.propertyRepo.save(property);
+
+      // Trigger global notification
+      await this.notificationsService.sendGlobalNotification(
+        'New Property Listed!',
+        `${saved.title} was just posted in ${saved.province}. Check it out!`,
+        `/properties/${saved.id}`,
+        'PROPERTY_CREATED',
+        userId, // Pass the creator ID
+      );
+
+      return saved;
     } catch (error: any) {
       throw new BadRequestException(error.message || 'An error occurred while creating the property');
     }

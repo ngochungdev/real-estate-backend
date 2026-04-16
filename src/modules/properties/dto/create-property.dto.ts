@@ -1,4 +1,5 @@
 import { IsString, IsNumber, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreatePropertyDto {
   @IsString()
@@ -7,9 +8,11 @@ export class CreatePropertyDto {
   @IsString()
   description: string;
 
+  @Type(() => Number)
   @IsNumber()
   price: number;
 
+  @Type(() => Number)
   @IsNumber()
   area: number;
 
@@ -31,10 +34,12 @@ export class CreatePropertyDto {
   @IsString()
   status: string;
 
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   lat?: number;
 
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   lng?: number;

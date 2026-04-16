@@ -11,6 +11,7 @@ import { AuthenticationModule } from './modules/authentication/authentication.mo
 import { RolesModule } from './modules/roles/roles.module';
 import { PropertiesModule } from './modules/properties/properties.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ChatModule } from './modules/chat/chat.module';
     RolesModule,
     PropertiesModule,
     ChatModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
