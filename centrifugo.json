@@ -1,10 +1,10 @@
 {
   "http_api": {
-    "key": "centrifugo-api-secret-key"
+    "key": "a9b2c3d4e5f67890a1b2c3d4e5f67890"
   },
   "client": {
     "token": {
-      "hmac_secret_key": "centrifugo-token-secret-key"
+      "hmac_secret_key": "f1e2d3c4b5a69788f1e2d3c4b5a69788"
     },
     "allowed_origins": [
       "http://localhost:5173",
