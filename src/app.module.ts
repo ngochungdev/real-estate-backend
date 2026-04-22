@@ -26,7 +26,11 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
       type: 'postgres',
       url: process.env.DATABASE_URL,
       ssl:
-        process.env.NODE_ENV === 'production'
+        process.env.DB_SSL === 'true'
+          ? { rejectUnauthorized: false }
+          : process.env.DB_SSL === 'false'
+          ? false
+          : process.env.NODE_ENV === 'production'
           ? { rejectUnauthorized: false }
           : false,
       autoLoadEntities: true,
