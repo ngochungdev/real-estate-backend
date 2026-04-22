@@ -5,11 +5,7 @@
   "client": {
     "token": {
       "hmac_secret_key": "f1e2d3c4b5a69788f1e2d3c4b5a69788"
-    },
-    "allowed_origins": [
-      "http://localhost:5173",
-      "http://localhost:3000"
-    ]
+    }
   },
   "admin": {
     "enabled": true,

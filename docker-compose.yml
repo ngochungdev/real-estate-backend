@@ -51,6 +51,8 @@ services:
     image: centrifugo/centrifugo:v6
     container_name: realestate_centrifugo
     restart: always
+    environment:
+      - CENTRIFUGO_CLIENT_ALLOWED_ORIGINS=${FRONTEND_URL}
     volumes:
       - ./centrifugo.json:/centrifugo.json
     command: centrifugo --config=/centrifugo.json
