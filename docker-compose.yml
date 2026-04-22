@@ -65,6 +65,11 @@ services:
     restart: always
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_HOST=redis
+      - REDIS_URL=redis://redis:6379
+      - CENTRIFUGO_URL=http://centrifugo:8000
     ports:
       - "3000:3000"
     depends_on:

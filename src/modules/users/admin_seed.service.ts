@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { User } from './entities/user.entity';
-import { UserRole } from 'src/modules/roles/entities/role.entity';
+import { UserRole } from '../roles/entities/role.entity';
 
 @Injectable()
 export class AdminSeedService implements OnModuleInit {

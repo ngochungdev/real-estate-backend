@@ -9,7 +9,8 @@ import {
   DeleteDateColumn,
 } from 'typeorm';
 
-import { UserRole } from 'src/modules/roles/entities/role.entity';
+import { Property } from '../../properties/entities/property.entity';
+import { UserRole } from '../../roles/entities/role.entity';
 
 @Entity('users')
 export class User {

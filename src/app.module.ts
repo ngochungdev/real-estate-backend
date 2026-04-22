@@ -24,11 +24,11 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      username: process.env.POSTGRES_USER || 'admin',
-      password: process.env.POSTGRES_PASSWORD || '123456',
-      database: process.env.POSTGRES_DB || 'realestate',
+      url: process.env.DATABASE_URL,
+      ssl:
+        process.env.NODE_ENV === 'production'
+          ? { rejectUnauthorized: false }
+          : false,
       autoLoadEntities: true,
       synchronize: true, // dev only
     }),
@@ -42,4 +42,4 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

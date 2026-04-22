@@ -18,7 +18,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from '../authentication/jwt-auth.guard';
-import { Public } from 'src/common/decorators/public.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)

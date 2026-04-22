@@ -29,8 +29,11 @@ WORKDIR /usr/src/app
 # Copy production files from builder
 COPY --from=builder /usr/src/app/package.json ./
 COPY --from=builder /usr/src/app/pnpm-lock.yaml ./
+COPY --from=builder /usr/src/app/tsconfig.json ./
 # Only install production dependencies
 RUN pnpm install --prod --frozen-lockfile
+# Install tsconfig-paths for runtime path alias resolution
+RUN pnpm add tsconfig-paths
 
 # Copy built application
 COPY --from=builder /usr/src/app/dist ./dist
@@ -38,5 +41,5 @@ COPY --from=builder /usr/src/app/dist ./dist
 # Expose the port
 EXPOSE 3000
 
-# Start the application
-CMD ["node", "dist/main.js"]
+# Start the application with tsconfig-paths to resolve src/* aliases
+CMD ["node", "-r", "tsconfig-paths/register", "dist/main.js"]
