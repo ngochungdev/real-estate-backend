@@ -26,6 +26,9 @@ RUN npm install -g pnpm
 
 WORKDIR /usr/src/app
 
+# Set Node environment to production
+ENV NODE_ENV=production
+
 # Copy production files from builder
 COPY --from=builder /usr/src/app/package.json ./
 COPY --from=builder /usr/src/app/pnpm-lock.yaml ./
