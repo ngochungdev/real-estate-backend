@@ -4,8 +4,7 @@
   },
   "client": {
     "allowed_origins": [
-      "http://localhost:5173",
-      "https://real-estate-frontend-ck26.vercel.app"
+      "*"
     ],
     "token": {
       "hmac_secret_key": "f1e2d3c4b5a69788f1e2d3c4b5a69788"
