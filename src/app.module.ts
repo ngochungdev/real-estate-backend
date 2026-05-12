@@ -29,12 +29,12 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
         process.env.DB_SSL === 'true'
           ? { rejectUnauthorized: false }
           : process.env.DB_SSL === 'false'
-          ? false
-          : process.env.NODE_ENV === 'production'
-          ? { rejectUnauthorized: false }
-          : false,
+            ? false
+            : process.env.NODE_ENV === 'production'
+              ? { rejectUnauthorized: false }
+              : false,
       autoLoadEntities: true,
-      synchronize: true, // dev only
+      synchronize: false, // dev only
     }),
     AuthenticationModule,
     UsersModule,
