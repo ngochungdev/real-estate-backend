@@ -35,6 +35,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
               : false,
       autoLoadEntities: true,
       synchronize: false, // dev only
+      migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
+      migrationsRun: true,
     }),
     AuthenticationModule,
     UsersModule,

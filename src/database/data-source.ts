@@ -24,6 +24,6 @@ export const AppDataSource = new DataSource({
     NotificationRead,
     Notification,
   ],
-  migrations: ['src/migrations/*.ts'],
+  migrations: [__dirname + '/../migrations/*{.ts,.js}'],
   subscribers: [],
 });
