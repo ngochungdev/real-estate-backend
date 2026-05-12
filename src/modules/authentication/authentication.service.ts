@@ -1,7 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
 
 import { UsersService } from '../users/users.service';
 import { RedisService } from '../redis/redis.service';
@@ -74,5 +75,47 @@ export class AuthenticationService {
     } catch (err) {
       throw new UnauthorizedException('Invalid tokens');
     }
+  }
+
+  async forgotPassword(username: string) {
+    let resetToken: string | null = null;
+    try {
+      const user = await this.usersService.findByUsername(username);
+      // Generate token
+      resetToken = crypto.randomBytes(32).toString('hex');
+      
+      // Store in Redis (15 mins = 900 seconds)
+      await this.redisService.set(`password_reset:${resetToken}`, user.id, 900);
+      
+      // Log for development
+      console.log(`\n\n=== PASSWORD RESET TOKEN FOR ${username} ===`);
+      console.log(resetToken);
+      console.log(`===========================================\n\n`);
+      
+    } catch (e) {
+      // If user not found, we silently "succeed" to prevent username enumeration
+    }
+    
+    return { 
+      message: 'If the username exists, a reset instruction has been processed.',
+      // TODO: Remove this token from response before going to production
+      token: resetToken 
+    };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const userId = await this.redisService.get(`password_reset:${token}`);
+    
+    if (!userId) {
+      throw new BadRequestException('Invalid or expired password reset token');
+    }
+    
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.usersService.updatePassword(userId, hashedPassword);
+    
+    // Invalidate the token
+    await this.redisService.del(`password_reset:${token}`);
+    
+    return { message: 'Password has been successfully reset' };
   }
 }

@@ -155,6 +155,16 @@ export class UsersService {
     await this.usersRepository.save(user);
   }
 
+  async updatePassword(id: string, hashedNewPassword: string): Promise<void> {
+    const user = await this.usersRepository.findOneBy({ id });
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    user.password_hash = hashedNewPassword;
+    await this.usersRepository.save(user);
+  }
+
   async findByUsername(username: string) {
     const user = await this.usersRepository.findOne({
       where: { username },

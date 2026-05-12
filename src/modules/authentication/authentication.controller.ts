@@ -12,6 +12,8 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthenticationService } from './authentication.service';
 import { UsersService } from '../users/users.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -90,5 +92,15 @@ export class AuthenticationController {
     const accessToken = req.headers['authorization']?.split(' ')[1];
     const refreshToken = req.body.refreshToken;
     return this.authenticationService.logout(accessToken, refreshToken);
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authenticationService.forgotPassword(dto.username);
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authenticationService.resetPassword(dto.token, dto.newPassword);
   }
 }
