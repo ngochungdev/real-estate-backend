@@ -20,10 +20,10 @@ export class Property {
   @Column('text')
   description: string;
 
-  @Column()
+  @Column({ type: 'double precision' })
   price: number;
 
-  @Column()
+  @Column({ type: 'double precision' })
   area: number;
 
   @Column()
