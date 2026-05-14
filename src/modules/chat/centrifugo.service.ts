@@ -16,7 +16,7 @@ export class CentrifugoService {
 
   async publish(channel: string, data: Record<string, any>): Promise<void> {
     try {
-      console.log(`[CentrifugoService] Publishing to ${channel}...`);
+      this.logger.log(`Publishing to channel: ${channel}`);
       
       const response = await axios.post(
         this.apiUrl,
