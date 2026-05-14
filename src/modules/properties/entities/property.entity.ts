@@ -26,6 +26,27 @@ export class Property {
   @Column({ type: 'double precision' })
   area: number;
 
+  @Column({ type: 'int', default: 0 })
+  bedrooms: number;
+
+  @Column({ type: 'int', default: 0 })
+  bathrooms: number;
+
+  @Column({ type: 'int', default: 0 })
+  floors: number;
+
+  @Column({ type: 'double precision', nullable: true })
+  frontage: number;
+
+  @Column({ type: 'varchar', nullable: true })
+  direction: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  legal_status: string;
+
+  @Column({ type: 'boolean', default: false })
+  isApproved: boolean;
+
   @Column()
   address: string;
 

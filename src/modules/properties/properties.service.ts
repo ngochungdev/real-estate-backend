@@ -45,7 +45,7 @@ export class PropertiesService {
     }
   }
 
-  async findAll(filterDto: GetPropertiesFilterDto, currentUserId?: string) {
+  async findAll(filterDto: GetPropertiesFilterDto, currentUserId?: string, currentUserRole?: string) {
     const {
       page = 1,
       limit = 10,
@@ -54,6 +54,14 @@ export class PropertiesService {
       status,
       minPrice,
       maxPrice,
+      minArea,
+      maxArea,
+      bedrooms,
+      bathrooms,
+      direction,
+      sortBy,
+      sortOrder,
+      isApproved,
       province,
       district,
       ward,
@@ -99,11 +107,53 @@ export class PropertiesService {
       query.andWhere('property.ward = :ward', { ward });
     }
 
+    if (minArea) {
+      query.andWhere('property.area >= :minArea', { minArea });
+    }
+
+    if (maxArea) {
+      query.andWhere('property.area <= :maxArea', { maxArea });
+    }
+
+    if (bedrooms) {
+      query.andWhere('property.bedrooms >= :bedrooms', { bedrooms });
+    }
+
+    if (bathrooms) {
+      query.andWhere('property.bathrooms >= :bathrooms', { bathrooms });
+    }
+
+    if (direction) {
+      query.andWhere('property.direction = :direction', { direction });
+    }
+
     if (user_id) {
       query.andWhere('property.user_id = :user_id', { user_id });
     }
 
-    query.orderBy('property.id', 'DESC');
+    // Authorization & Visibility logic for isApproved
+    if (currentUserRole === 'System Admin') {
+      // Admins can filter by isApproved explicitly
+      if (isApproved !== undefined) {
+        // Parse boolean if it comes as a string 'true'/'false'
+        const approvedBool = String(isApproved) === 'true';
+        query.andWhere('property.isApproved = :isApproved', { isApproved: approvedBool });
+      }
+    } else {
+      // Normal users or guests can only see approved properties, OR their own pending properties
+      if (currentUserId) {
+        query.andWhere('(property.isApproved = true OR property.user_id = :currentUserId)', { currentUserId });
+      } else {
+        query.andWhere('property.isApproved = true');
+      }
+    }
+
+    // Sorting
+    const allowedSortFields = ['price', 'area', 'createdAt', 'id'];
+    const sortField = sortBy && allowedSortFields.includes(sortBy) ? `property.${sortBy}` : 'property.id';
+    const order = sortOrder === 'ASC' ? 'ASC' : 'DESC';
+    
+    query.orderBy(sortField, order);
 
     const [data, total] = await query
       .skip((page - 1) * limit)
@@ -205,6 +255,30 @@ export class PropertiesService {
 
     property.images = [...(property.images || []), ...urls];
     return this.propertyRepo.save(property);
+  }
+
+  // ─── ADMIN MODERATION ───────────────────────────────────────────────────────
+
+  async approveProperty(propertyId: number, isApproved: boolean) {
+    const property = await this.propertyRepo.findOneBy({ id: propertyId });
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+
+    property.isApproved = isApproved;
+    await this.propertyRepo.save(property);
+
+    // Notify the user who created the property
+    const statusText = isApproved ? 'approved and is now live' : 'rejected';
+    await this.notificationsService.createNotification(
+      property.user_id,
+      `Property ${isApproved ? 'Approved' : 'Rejected'}`,
+      `Your property "${property.title}" has been ${statusText}.`,
+      `/properties/${property.id}`,
+      'PROPERTY_APPROVAL',
+    );
+
+    return { message: `Property has been ${statusText}` };
   }
 
   // ─── LIKE / UNLIKE ──────────────────────────────────────────────────────────

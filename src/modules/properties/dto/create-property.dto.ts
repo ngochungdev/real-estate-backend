@@ -21,6 +21,40 @@ export class CreatePropertyDto {
   @IsNumber()
   area: number;
 
+  @ApiProperty({ required: false, example: 3, description: 'Number of bedrooms' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  bedrooms?: number;
+
+  @ApiProperty({ required: false, example: 2, description: 'Number of bathrooms' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  bathrooms?: number;
+
+  @ApiProperty({ required: false, example: 2, description: 'Number of floors' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  floors?: number;
+
+  @ApiProperty({ required: false, example: 5.5, description: 'Frontage width in meters' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  frontage?: number;
+
+  @ApiProperty({ required: false, example: 'East', description: 'Direction of the property' })
+  @IsOptional()
+  @IsString()
+  direction?: string;
+
+  @ApiProperty({ required: false, example: 'Sổ đỏ/Sổ hồng', description: 'Legal status' })
+  @IsOptional()
+  @IsString()
+  legal_status?: string;
+
   @ApiProperty({ example: '123 Nguyen Trai Street', description: 'Full address' })
   @IsString()
   address: string;

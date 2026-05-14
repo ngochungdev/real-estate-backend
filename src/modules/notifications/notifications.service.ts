@@ -83,6 +83,30 @@ export class NotificationsService {
     return readRecord;
   }
 
+  async createNotification(userId: string, title: string, content: string, link?: string, type = 'GENERAL') {
+    const notification = this.notificationRepo.create({
+      userId,
+      title,
+      content,
+      link,
+      type,
+    });
+
+    const saved = await this.notificationRepo.save(notification);
+
+    // Publish to user-specific channel
+    await this.centrifugoService.publish(`notifications:user:${userId}`, {
+      id: saved.id,
+      title: saved.title,
+      content: saved.content,
+      link: saved.link,
+      type: saved.type,
+      createdAt: saved.createdAt,
+    });
+
+    return saved;
+  }
+
   async sendGlobalNotification(title: string, content: string, link?: string, type = 'GENERAL', creatorId?: string) {
     const notification = this.notificationRepo.create({
       title,

@@ -12,6 +12,7 @@ import {
   UploadedFiles,
   UseInterceptors,
   ParseIntPipe,
+  ParseBoolPipe,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { PropertiesService } from './properties.service';
@@ -21,6 +22,8 @@ import { GetPropertiesFilterDto } from './dto/get-properties-filter.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../authentication/jwt-auth.guard';
 import { Public } from '../../common/decorators/public.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RolesGuard } from '../../common/guards/roles.guard';
 
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
@@ -37,7 +40,8 @@ export class PropertiesController {
   @Get()
   findAll(@Query() filterDto: GetPropertiesFilterDto, @Request() req) {
     const currentUserId = req.user?.userId;
-    return this.propertiesService.findAll(filterDto, currentUserId);
+    const currentUserRole = req.user?.role;
+    return this.propertiesService.findAll(filterDto, currentUserId, currentUserRole);
   }
 
   /**
@@ -83,6 +87,22 @@ export class PropertiesController {
     @Request() req,
   ) {
     return this.propertiesService.uploadImages(+id, files, req.user.userId);
+  }
+
+  // ─── ADMIN MODERATION ───────────────────────────────────────────────────────
+
+  /**
+   * PATCH /api/v1/properties/:id/approve
+   * Approve or reject a property. Admin only.
+   */
+  @UseGuards(RolesGuard)
+  @Roles('System Admin')
+  @Patch(':id/approve')
+  approveProperty(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('isApproved', ParseBoolPipe) isApproved: boolean,
+  ) {
+    return this.propertiesService.approveProperty(id, isApproved);
   }
 
   // ─── LIKE / UNLIKE ──────────────────────────────────────────────────────────

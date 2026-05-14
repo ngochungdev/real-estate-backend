@@ -168,6 +168,7 @@ export class UsersService {
   async findByUsername(username: string) {
     const user = await this.usersRepository.findOne({
       where: { username },
+      relations: ['role'],
     });
 
     if (!user)
@@ -190,6 +191,7 @@ export class UsersService {
   async findById(id: string) {
     const user = await this.usersRepository.findOne({
       where: { id },
+      relations: ['role'],
     });
 
     if (!user) throw new NotFoundException(`User with id ${id} not found`);

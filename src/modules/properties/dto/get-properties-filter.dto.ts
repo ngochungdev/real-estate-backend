@@ -44,6 +44,49 @@ export class GetPropertiesFilterDto {
   @IsNumber()
   maxPrice?: number;
 
+  @ApiPropertyOptional({ description: 'Minimum area filter', example: 50 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  minArea?: number;
+
+  @ApiPropertyOptional({ description: 'Maximum area filter', example: 200 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  maxArea?: number;
+
+  @ApiPropertyOptional({ description: 'Filter by number of bedrooms', example: 2 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  bedrooms?: number;
+
+  @ApiPropertyOptional({ description: 'Filter by number of bathrooms', example: 2 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  bathrooms?: number;
+
+  @ApiPropertyOptional({ description: 'Filter by direction', example: 'East' })
+  @IsOptional()
+  @IsString()
+  direction?: string;
+
+  @ApiPropertyOptional({ description: 'Sort field', example: 'price' })
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @ApiPropertyOptional({ description: 'Sort order', example: 'ASC' })
+  @IsOptional()
+  @IsString()
+  sortOrder?: 'ASC' | 'DESC';
+
+  @ApiPropertyOptional({ description: 'Filter by approval status (Admin only)', example: true })
+  @IsOptional()
+  isApproved?: boolean;
+
   @ApiPropertyOptional({ description: 'Filter by province', example: 'Hanoi' })
   @IsOptional()
   @IsString()
